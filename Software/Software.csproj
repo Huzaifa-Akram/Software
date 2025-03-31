@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="resources\add.png" />
+    <None Remove="resources\bin.png" />
+    <None Remove="resources\cancel_icon.png" />
+    <None Remove="resources\favicon.ico" />
+    <None Remove="resources\logo.ico" />
+    <None Remove="resources\logo.png" />
+    <None Remove="resources\print_icon.png" />
+    <None Remove="resources\save_icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="resources\add.png" />
+    <Resource Include="resources\bin.png" />
+    <Resource Include="resources\cancel_icon.png" />
+    <Resource Include="resources\favicon.ico" />
+    <Resource Include="resources\logo.ico" />
+    <Resource Include="resources\logo.png" />
+    <Resource Include="resources\print_icon.png" />
+    <Resource Include="resources\save_icon.png" />
+  </ItemGroup>
+
+</Project>

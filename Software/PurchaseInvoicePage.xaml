@@ -1,0 +1,394 @@
+﻿<Page x:Class="Software.PurchaseInvoicePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Software"
+      mc:Ignorable="d" 
+      d:DesignHeight="650" d:DesignWidth="840"
+              Title="Purchase Invoice"
+      Background="#F5F5F5">
+
+    <Page.Resources>
+        <DropShadowEffect x:Key="DropShadowEffect" ShadowDepth="2" Direction="315" Opacity="0.2" BlurRadius="5"/>
+
+        <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="28"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#1E3A8A"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+        </Style>
+
+        <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#1E3A8A"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+
+        <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1E40AF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Page.Resources>
+
+    <Border Margin="20" Background="White" CornerRadius="8" Padding="24" 
+            BorderBrush="#E5E7EB" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Grid.Row="0" Text="Purchase Invoice" Style="{StaticResource HeaderTextStyle}"/>
+
+            <!-- Supplier and Invoice Number -->
+            <Grid Grid.Row="1" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,10,0">
+                    <ComboBox x:Name="SupplierComboBox" Padding="12" BorderThickness="0" 
+                        FontSize="15" VerticalContentAlignment="Center"
+                        DisplayMemberPath="Name" SelectedValuePath="Id" />
+                </Border>
+
+                <Border Grid.Column="1" BorderThickness="1" BorderBrush="#E0E0E0" Margin="10,0,0,0">
+                    <TextBox x:Name="InvoiceNumberTextBox" Padding="12" BorderThickness="0" 
+                             FontSize="15" VerticalContentAlignment="Center" IsReadOnly="True"
+                             Text="Invoice No. 104211"/>
+                </Border>
+            </Grid>
+
+            <!-- New Button for Adding Item -->
+            <Button x:Name="AddNewItemButton" Content="Add New Item" Grid.Row="2" Grid.ColumnSpan="2" 
+                    VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,8" 
+                    Background="White" Foreground="#1E3A8A" BorderBrush="#1E3A8A" BorderThickness="2" 
+                    Click="AddNewItemButton_Click" Padding="8"/>
+
+            <!-- Invoice Items Table -->
+            <Grid Grid.Row="3" Margin="0,0,0,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Table Headers -->
+                <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="#E0E0E0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Item Name" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="1" Text="Purchase Rate" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="2" Text="Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="3" Text="Expiry Date" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="4" Text="Total" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                    </Grid>
+                </Border>
+
+                <!-- Table Rows -->
+                <ListView Grid.Row="1" x:Name="InvoiceItemsListView" BorderThickness="0" Margin="0" Background="Transparent" MouseDoubleClick="InvoiceItemsListView_MouseDoubleClick">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#F0F0F0"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Height="40">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="40"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="{Binding ItemName}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding PurchaseRate, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Quantity}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Text="{Binding Total, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <Button Grid.Column="5" Width="30" Height="30" Background="Transparent" BorderThickness="0" Click="DeleteInvoiceItemButton_Click">
+                                    <Image Source="Resources/bin.png" Width="20" Height="20"/>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
+
+            <!-- Add Item Button (+ symbol) -->
+            <Button x:Name="AddItemButton"  Grid.Row="4" VerticalAlignment="Top" HorizontalAlignment="Center" 
+            Width="40" Height="40" Margin="0,0,0,0" Click="AddItemButton_Click" BorderThickness="0"
+            Background="Transparent" BorderBrush="#E0E0E0" Padding="0">
+                <Image Source="Resources/add.png" Width="30" Height="30"/>
+            </Button>
+
+            <!-- Footer with Totals and Action Buttons -->
+            <Grid Grid.Row="5" Margin="10,10,10,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Total Section -->
+                <Border Grid.Row="1" Grid.Column="1"  BorderThickness="1" BorderBrush="Black" Margin="0,0,10,0" Height="40" VerticalAlignment="Top" CornerRadius="5" >
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#8af786" Offset="0.0"/>
+                            <GradientStop Color="#C8E6C9" Offset="1.0"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel Orientation="Horizontal" Margin="15,10">
+                        <TextBlock Text="Total Discount: " FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock x:Name="TotalDiscountTextBlock" Text="00" FontSize="15"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="1" Grid.Column="2" Background="LightGray" BorderThickness="1" BorderBrush="Black" Margin="0,0,10,0" Height="40" VerticalAlignment="Top" CornerRadius="5">
+                    <StackPanel Orientation="Horizontal" Margin="15,10">
+                        <TextBlock Text="Total Amount: " FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock x:Name="TotalAmountTextBlock" Text="00" FontSize="15"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Vertical" VerticalAlignment="Center" >
+                    <Border CornerRadius="20" Margin="0,0,0,8" Padding="6" Background="#15700e" Width="200">
+                        <Button x:Name="SaveButton" Click="SaveButton_Click" 
+                            Style="{StaticResource SaveButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="Resources/save_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
+                                <TextBlock Text="Save"/>
+                            </StackPanel>
+                        </Button>
+                    </Border>
+
+                    <Border CornerRadius="20" Margin="0,0,0,8" Background="#FF5252" Padding="6" Width="200">
+                        <Button x:Name="CancelButton" Click="CancelButton_Click" 
+                            Style="{StaticResource CancelButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="Resources/cancel_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
+                                <TextBlock Text="Cancel"/>
+                            </StackPanel>
+                        </Button>
+                    </Border>
+
+                    <Border CornerRadius="20" Background="#5E35B1" Padding="6" Width="200">
+                        <Button x:Name="SaveAndPrintButton" Click="SaveAndPrintButton_Click" 
+                            Style="{StaticResource SaveAndPrintButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="Resources/print_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
+                                <TextBlock Text="Save &amp; Print"/>
+                            </StackPanel>
+                        </Button>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- Popup for Item Selection -->
+            <Popup x:Name="ItemSelectionPopup" StaysOpen="False" Placement="Center" 
+                   Width="400" Height="400" IsOpen="False" Opened="ItemSelectionPopup_Opened" KeyDown="ItemSelectionPopup_KeyDown">
+                <Border Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="20" Effect="{StaticResource DropShadowEffect}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Item Names" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15"/>
+
+                        <Border Grid.Row="1" BorderThickness="1" BorderBrush="#E0E0E0" Padding="10,5" Margin="0,0,0,15">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔍" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="ItemSearchBox" BorderThickness="0" Width="300" 
+                                         TextChanged="ItemSearchBox_TextChanged"/>
+                            </StackPanel>
+                        </Border>
+
+                        <ListView Grid.Row="2" x:Name="ItemsListView" BorderThickness="0" Background="Transparent"
+                                  SelectionMode="Single" MouseDoubleClick="ItemsListView_MouseDoubleClick">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Padding" Value="8,4"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="#F0F0F0"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#E3F2FD"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="5">
+                                        <TextBlock Text="•" Margin="0,0,12,0" Foreground="#5E35B1"/>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Border>
+            </Popup>
+
+            <!-- Popup for Item Details Entry -->
+            <Popup x:Name="ItemDetailsPopup" StaysOpen="False" Placement="Center" 
+           Width="400" Height="460" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
+                <Border Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="20" Effect="{StaticResource DropShadowEffect}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" x:Name="SelectedItemNameTextBlock" 
+                           Text="Item Details" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15"/>
+
+                        <StackPanel Grid.Row="1">
+                            <TextBlock x:Name="SaleRate" Text="" FontWeight="Medium" Foreground="Green"/>
+                            <TextBlock x:Name="LastPurchasePriceTextBlock" Text="Last Purchase Price: 0.00" Visibility="Collapsed" Margin="0,5,0,5" Foreground="Blue"/>
+
+                            <TextBlock Text="Purchase Rate" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <TextBox x:Name="ItemRateTextBox" Padding="12,8" BorderThickness="0"
+                                 TextChanged="ItemDetails_TextChanged"/>
+                            </Border>
+
+                            <TextBlock Text="Quantity" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <TextBox x:Name="ItemQuantityTextBox" Padding="12,8" BorderThickness="0" Text="1"
+                                 TextChanged="ItemDetails_TextChanged"/>
+                            </Border>
+
+
+                            <TextBlock Text="Expiry Date" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <DatePicker x:Name="NewItemExpiryDatePicker" Padding="12,8" BorderThickness="0"/>
+                            </Border>
+
+                            <TextBlock Text="Total" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Background="#F5F5F5">
+                                <TextBox x:Name="ItemTotalTextBox" Padding="12,8" BorderThickness="0" IsReadOnly="True"/>
+                            </Border>
+                            <Label x:Name="ErrorLabel" Foreground="Red" Visibility="Hidden"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button x:Name="CancelItemButton" Content="Cancel" Padding="15,8" Margin="0,0,10,0"
+                            Click="CancelItemButton_Click" Background="#F5F5F5" BorderThickness="1" 
+                            BorderBrush="#E0E0E0"/>
+                            <Button x:Name="AddToInvoiceButton" Content="Add to Invoice" Padding="15,8"
+                        Background="#00E676" Foreground="White" BorderThickness="0"
+                        Click="AddToInvoiceButton_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Popup>
+
+            <!-- Popup for Adding New Item -->
+            <Popup x:Name="AddNewItemPopup" StaysOpen="False" Placement="Center" 
+                   Width="400" Height="500" IsOpen="False" KeyDown="AddNewItemPopup_KeyDown">
+                <Border Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="20" Effect="{StaticResource DropShadowEffect}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Add New Item" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,15"/>
+
+                        <StackPanel Grid.Row="1">
+                            <TextBlock Text="Item Name" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <TextBox x:Name="NewItemNameTextBox" Padding="12,8" BorderThickness="0"/>
+                            </Border>
+
+                            <TextBlock Text="Company Name" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <TextBox x:Name="NewItemCompanyTextBox" Padding="12,8" BorderThickness="0"/>
+                            </Border>
+
+                            <Label x:Name="NewItemErrorLabel" Foreground="Red" Visibility="Hidden"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button x:Name="CancelNewItemButton" Content="Cancel" Padding="15,8" Margin="0,0,10,0"
+                                    Click="CancelNewItemButton_Click"  Background="#F5F5F5" BorderThickness="1" 
+                                    BorderBrush="#E0E0E0"/>
+                            <Button x:Name="SaveNewItemButton" Content="Save Item" Padding="15,8"
+                                    Background="#00E676" Foreground="White" BorderThickness="0"
+                                    Click="SaveNewItemButton_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Popup>
+        </Grid>
+    </Border>
+</Page>
