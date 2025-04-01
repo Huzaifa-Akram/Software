@@ -20,7 +20,7 @@ namespace Software
         private const string? LicenseSentRegistryValue = "LicenseSent";
 
         // Flag to enable/disable test mode (set to true for testing)
-        private const bool TestMode = true;
+        private const bool TestMode = false;
 
         public LoginWindow()
         {
