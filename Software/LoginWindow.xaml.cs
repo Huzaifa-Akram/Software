@@ -171,13 +171,121 @@ namespace Software
             try
             {
                 var fromAddress = new MailAddress("clientsoftware3@gmail.com", "Software");
-                var toAddress = new MailAddress("huzaifaakram121@gmail.com", "Huzaifa Akram");
-                const string? fromPassword = "bxib vall vgnm xzxq";
-                string? deviceInfo = Environment.MachineName +
-                    Environment.UserName +
-                    Environment.ProcessorCount;
-                const string? subject = "Client is Demanding License Key";
-                string? body = $"License key is: {licenseKey}\n\nDevice Info:\n{deviceInfo}";
+                var primaryRecipient = new MailAddress("clientsoftware3@gmail.com", "Software");
+                var secondaryRecipient = new MailAddress("huzaifaakram121@gmail.com", "Huzaifa Akram");
+                const string? fromPassword = "tasn utdh jczo roah";
+
+                // Collect device information in a more structured way
+                string machineName = Environment.MachineName;
+                string userName = Environment.UserName;
+                string processorCount = Environment.ProcessorCount.ToString();
+                string osVersion = Environment.OSVersion.ToString();
+                string dotNetVersion = Environment.Version.ToString();
+
+                const string? subject = "Client License Key Request";
+
+                // Create an HTML formatted email body
+                string? htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+        }}
+        h1 {{
+            color: #0066cc;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eeeeee;
+            padding-bottom: 10px;
+        }}
+        h2 {{
+            color: #444444;
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }}
+        .key-section {{
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #0066cc;
+        }}
+        .info-table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+        .info-table td {{
+            padding: 8px;
+            border-bottom: 1px solid #eeeeee;
+        }}
+        .info-table td:first-child {{
+            font-weight: bold;
+            width: 40%;
+        }}
+        .footer {{
+            margin-top: 30px;
+            font-size: 12px;
+            color: #777777;
+            text-align: center;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>License Key Information</h1>
+        
+        <div class='key-section'>
+            <h2>License Key</h2>
+            <p style='font-size: 16px; font-weight: bold;'>{licenseKey}</p>
+        </div>
+        
+        <h2>Client Information</h2>
+        <table class='info-table'>
+            <tr>
+                <td>Machine Name:</td>
+                <td>{machineName}</td>
+            </tr>
+            <tr>
+                <td>User Name:</td>
+                <td>{userName}</td>
+            </tr>
+            <tr>
+                <td>Processor Count:</td>
+                <td>{processorCount}</td>
+            </tr>
+            <tr>
+                <td>OS Version:</td>
+                <td>{osVersion}</td>
+            </tr>
+            <tr>
+                <td>Framework Version:</td>
+                <td>{dotNetVersion}</td>
+            </tr>
+            <tr>
+                <td>Request Date:</td>
+                <td>{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}</td>
+            </tr>
+        </table>
+        
+        <div class='footer'>
+            <p>This is an automated email from the Software licensing system.</p>
+            <p>Huzaifa Adil Akram <a href='https://github.com/Huzaifa-Akram'>GITHUB</a></p>
+        </div>
+    </div>
+</body>
+</html>";
 
                 var smtp = new SmtpClient
                 {
@@ -188,14 +296,23 @@ namespace Software
                     UseDefaultCredentials = false,
                     Credentials = new NetworkCredential(fromAddress.Address, fromPassword)
                 };
-                using (var message = new MailMessage(fromAddress, toAddress)
+
+                // Create a message that will be sent to both recipients
+                using (var message = new MailMessage()
                 {
+                    From = fromAddress,
                     Subject = subject,
-                    Body = body
+                    Body = htmlBody,
+                    IsBodyHtml = true // Enable HTML formatting
                 })
                 {
+                    // Add both recipients
+                    message.To.Add(primaryRecipient);
+                    message.To.Add(secondaryRecipient);
+
+                    // Send the email
                     smtp.Send(message);
-                    Debug.WriteLine("License key email sent successfully.");
+                    Debug.WriteLine("License key email sent successfully to both recipients.");
                 }
             }
             catch (Exception ex)
@@ -204,5 +321,6 @@ namespace Software
                 MessageBox.Show($"Failed to send license key: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
     }
 }
