@@ -14,15 +14,25 @@ namespace Software
 {
     public partial class LoginWindow : Window
     {
-        private static readonly string LicenseFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Software", "license.key");
-        private const string LicenseSentRegistryKey = @"HKEY_CURRENT_USER\Software\SoftwareName";
+        // Add "Test" suffix to create new paths for testing
+        private static readonly string LicenseFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Software", "licenseTest.key");
+        private const string LicenseSentRegistryKey = @"HKEY_CURRENT_USER\Software\SoftwareNameTest";
         private const string? LicenseSentRegistryValue = "LicenseSent";
+
+        // Flag to enable/disable test mode (set to true for testing)
+        private const bool TestMode = true;
 
         public LoginWindow()
         {
             InitializeComponent();
             Loaded += (s, e) => txtLicenseKey.Focus();
             Debug.WriteLine("LoginWindow initialized.");
+
+            // Reset existing licenses if in test mode
+            if (TestMode)
+            {
+                ResetLicenseData();
+            }
 
             Directory.CreateDirectory(Path.GetDirectoryName(LicenseFilePath) ?? throw new InvalidOperationException("License file path is invalid."));
             Debug.WriteLine("License directory ensured.");
@@ -40,6 +50,7 @@ namespace Software
                     Debug.WriteLine("License key has not been sent. Sending email.");
                     SendLicenseKeyToEmail(licenseKey);
                     Registry.SetValue(LicenseSentRegistryKey, LicenseSentRegistryValue, true);
+                    Registry.SetValue(LicenseSentRegistryKey, "StoredLicenseKey", licenseKey);
                     Debug.WriteLine("License key sent and registry updated.");
                 }
                 else
@@ -53,7 +64,7 @@ namespace Software
             }
 
             string? storedLicenseKey = Registry.GetValue(LicenseSentRegistryKey, "StoredLicenseKey", null) as string;
-            if (storedLicenseKey != null && storedLicenseKey == File.ReadAllText(LicenseFilePath))
+            if (storedLicenseKey != null && File.Exists(LicenseFilePath) && storedLicenseKey == File.ReadAllText(LicenseFilePath))
             {
                 Debug.WriteLine("Valid license key found in registry. Opening main window.");
                 MainWindow? mainWindow = new MainWindow();
@@ -62,17 +73,50 @@ namespace Software
             }
         }
 
+        // New method to completely reset license data
+        public void ResetLicenseData()
+        {
+            // Delete license file
+            DeleteLicenseKeyFile();
+
+            // Delete registry keys
+            try
+            {
+                Registry.CurrentUser.DeleteSubKeyTree(@"Software\SoftwareNameTest", false);
+                Debug.WriteLine("Registry keys deleted.");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to delete registry keys: {ex.Message}");
+            }
+        }
+
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
             string? enteredLicenseKey = txtLicenseKey.Text;
             Debug.WriteLine($"Entered license key: {enteredLicenseKey}");
+
+            if (!File.Exists(LicenseFilePath))
+            {
+                MessageBox.Show("License key file not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             string? storedLicenseKey = File.ReadAllText(LicenseFilePath);
             Debug.WriteLine($"Stored license key: {storedLicenseKey}");
 
             if (enteredLicenseKey == storedLicenseKey)
             {
-                // ...existing code...
+                // Store the key in registry for auto-login next time
+                Registry.SetValue(LicenseSentRegistryKey, "StoredLicenseKey", storedLicenseKey);
+
+                MainWindow? mainWindow = new MainWindow();
+                mainWindow.Show();
+                Close();
+            }
+            else
+            {
+                MessageBox.Show("Invalid license key.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -91,10 +135,11 @@ namespace Software
 
         private void btnDeleteLicenseKey_Click(object sender, RoutedEventArgs e)
         {
-            DeleteLicenseKeyFile();
-            MessageBox.Show("License key file deleted. Restart the application to generate a new key.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            ResetLicenseData();
+            MessageBox.Show("License data reset. Restart the application to generate a new key.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        // The rest of your code remains unchanged
         private string GenerateLicenseKey()
         {
             using (var sha256 = SHA256.Create())
