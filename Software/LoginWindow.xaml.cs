@@ -62,15 +62,6 @@ namespace Software
             {
                 Debug.WriteLine("License key file found.");
             }
-
-            string? storedLicenseKey = Registry.GetValue(LicenseSentRegistryKey, "StoredLicenseKey", null) as string;
-            if (storedLicenseKey != null && File.Exists(LicenseFilePath) && storedLicenseKey == File.ReadAllText(LicenseFilePath))
-            {
-                Debug.WriteLine("Valid license key found in registry. Opening main window.");
-                MainWindow? mainWindow = new MainWindow();
-                mainWindow.Show();
-                Close();
-            }
         }
 
         // New method to completely reset license data
@@ -321,6 +312,5 @@ namespace Software
                 MessageBox.Show($"Failed to send license key: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
     }
 }
