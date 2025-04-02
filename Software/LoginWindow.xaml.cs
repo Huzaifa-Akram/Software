@@ -17,7 +17,7 @@ namespace Software
         // Add "Test" suffix to create new paths for testing
         private static readonly string LicenseFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Software", "licenseTest.key");
         private const string LicenseSentRegistryKey = @"HKEY_CURRENT_USER\Software\SoftwareNameTest";
-        private const string? LicenseSentRegistryValue = "LicenseSent";
+        private const string LicenseSentRegistryValue = "LicenseSent";
 
         // Flag to enable/disable test mode (set to true for testing)
         private const bool TestMode = false;
@@ -31,16 +31,52 @@ namespace Software
             // Reset existing licenses if in test mode
             if (TestMode)
             {
+                Debug.WriteLine("TEST MODE ACTIVE - Resetting license data");
                 ResetLicenseData();
             }
 
+            // Ensure license directory exists
             Directory.CreateDirectory(Path.GetDirectoryName(LicenseFilePath) ?? throw new InvalidOperationException("License file path is invalid."));
             Debug.WriteLine("License directory ensured.");
 
+            // Check if the license key is already stored in the registry
+            object? storedLicenseKey = Registry.GetValue(LicenseSentRegistryKey, "StoredLicenseKey", null);
+            if (storedLicenseKey != null && !TestMode)
+            {
+                Debug.WriteLine($"License key found in registry: {storedLicenseKey}");
+
+                // Verify that the license file also exists and matches
+                if (File.Exists(LicenseFilePath))
+                {
+                    string fileKey = File.ReadAllText(LicenseFilePath);
+                    if (fileKey == storedLicenseKey.ToString())
+                    {
+                        Debug.WriteLine("Registry key matches file key. Skipping license key input.");
+                        MainWindow? mainWindow = new MainWindow();
+                        mainWindow.Show();
+                        Close();
+                        return;
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Registry key doesn't match file key. Requiring license verification.");
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("License file doesn't exist though registry key is present. Requiring verification.");
+                }
+            }
+            else
+            {
+                Debug.WriteLine("No license key found in registry or test mode is active.");
+            }
+
+            // Handle license file generation if needed
             if (!File.Exists(LicenseFilePath))
             {
                 Debug.WriteLine("License key file not found. Generating new license key.");
-                string? licenseKey = GenerateLicenseKey();
+                string licenseKey = GenerateLicenseKey();
                 File.WriteAllText(LicenseFilePath, licenseKey);
                 Debug.WriteLine($"License key generated and saved: {licenseKey}");
 
@@ -50,7 +86,7 @@ namespace Software
                     Debug.WriteLine("License key has not been sent. Sending email.");
                     SendLicenseKeyToEmail(licenseKey);
                     Registry.SetValue(LicenseSentRegistryKey, LicenseSentRegistryValue, true);
-                    Registry.SetValue(LicenseSentRegistryKey, "StoredLicenseKey", licenseKey);
+                    // Don't save to StoredLicenseKey yet - require user to enter it first
                     Debug.WriteLine("License key sent and registry updated.");
                 }
                 else
@@ -64,17 +100,29 @@ namespace Software
             }
         }
 
-        // New method to completely reset license data
+        // Improved method to completely reset license data
         public void ResetLicenseData()
         {
             // Delete license file
             DeleteLicenseKeyFile();
 
-            // Delete registry keys
+            // Delete registry keys - make sure we're removing the entire registry key structure
             try
             {
-                Registry.CurrentUser.DeleteSubKeyTree(@"Software\SoftwareNameTest", false);
-                Debug.WriteLine("Registry keys deleted.");
+                // Check if registry key exists first
+                using (var key = Registry.CurrentUser.OpenSubKey(@"Software\SoftwareNameTest", false))
+                {
+                    if (key != null)
+                    {
+                        Debug.WriteLine("Found registry key, deleting...");
+                        Registry.CurrentUser.DeleteSubKeyTree(@"Software\SoftwareNameTest", false);
+                        Debug.WriteLine("Registry keys deleted successfully");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Registry key doesn't exist, nothing to delete");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -84,7 +132,7 @@ namespace Software
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)
         {
-            string? enteredLicenseKey = txtLicenseKey.Text;
+            string enteredLicenseKey = txtLicenseKey.Text.Trim();
             Debug.WriteLine($"Entered license key: {enteredLicenseKey}");
 
             if (!File.Exists(LicenseFilePath))
@@ -93,13 +141,15 @@ namespace Software
                 return;
             }
 
-            string? storedLicenseKey = File.ReadAllText(LicenseFilePath);
+            string storedLicenseKey = File.ReadAllText(LicenseFilePath).Trim();
             Debug.WriteLine($"Stored license key: {storedLicenseKey}");
 
             if (enteredLicenseKey == storedLicenseKey)
             {
+                Debug.WriteLine("License key validated successfully");
                 // Store the key in registry for auto-login next time
                 Registry.SetValue(LicenseSentRegistryKey, "StoredLicenseKey", storedLicenseKey);
+                Debug.WriteLine("License key stored in registry for future logins");
 
                 MainWindow? mainWindow = new MainWindow();
                 mainWindow.Show();
@@ -107,6 +157,7 @@ namespace Software
             }
             else
             {
+                Debug.WriteLine("Invalid license key entered");
                 MessageBox.Show("Invalid license key.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -128,23 +179,23 @@ namespace Software
         {
             ResetLicenseData();
             MessageBox.Show("License data reset. Restart the application to generate a new key.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            Application.Current.Shutdown();
         }
 
-        // The rest of your code remains unchanged
         private string GenerateLicenseKey()
         {
             using (var sha256 = SHA256.Create())
             {
-                string? deviceInfo = Environment.MachineName +
+                string deviceInfo = Environment.MachineName +
                                     Environment.UserName +
                                     Environment.ProcessorCount;
 
-                byte[]? hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(deviceInfo));
-                string? licenseKey = BitConverter.ToString(hash).Replace("-", "");
+                byte[] hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(deviceInfo));
+                string licenseKey = BitConverter.ToString(hash).Replace("-", "");
 
                 licenseKey = licenseKey.Substring(0, 20);
 
-                string? formattedKey = FormatLicenseKey(licenseKey);
+                string formattedKey = FormatLicenseKey(licenseKey);
 
                 Debug.WriteLine($"Generated license key: {formattedKey}");
                 return formattedKey;
@@ -164,7 +215,7 @@ namespace Software
                 var fromAddress = new MailAddress("clientsoftware3@gmail.com", "Software");
                 var primaryRecipient = new MailAddress("clientsoftware3@gmail.com", "Software");
                 var secondaryRecipient = new MailAddress("huzaifaakram121@gmail.com", "Huzaifa Akram");
-                const string? fromPassword = "tasn utdh jczo roah";
+                const string fromPassword = "tasn utdh jczo roah";
 
                 // Collect device information in a more structured way
                 string machineName = Environment.MachineName;
@@ -173,10 +224,10 @@ namespace Software
                 string osVersion = Environment.OSVersion.ToString();
                 string dotNetVersion = Environment.Version.ToString();
 
-                const string? subject = "Client License Key Request";
+                const string subject = "Client License Key Request";
 
                 // Create an HTML formatted email body
-                string? htmlBody = $@"
+                string htmlBody = $@"
 <!DOCTYPE html>
 <html>
 <head>

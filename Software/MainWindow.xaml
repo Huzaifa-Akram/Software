@@ -64,7 +64,12 @@
                     </StackPanel>
                 </Button>
 
-
+                <Button x:Name="btnPurchaseDetail" Click="btnPurchaseDetail_Click" Style="{StaticResource SidebarButtonStyle}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8A5;" Foreground="White" Margin="0,0,10,0"/>
+                        <TextBlock Text="Purchase Detail" Foreground="White"/>
+                    </StackPanel>
+                </Button>
 
                 <Button x:Name="btnStockDetail" Click="btnStockDetail_Click" Style="{StaticResource SidebarButtonStyle}">
                     <StackPanel Orientation="Horizontal">

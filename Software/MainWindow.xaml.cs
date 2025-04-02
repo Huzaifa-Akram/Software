@@ -59,11 +59,14 @@ namespace Software
             MainFrame.Navigate(new ExpiryDetailsPage());
         }
 
-
-
         private void btnStockDetail_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.Navigate(new StockDetailPage());
+        }
+
+        private void btnPurchaseDetail_Click(object sender, RoutedEventArgs e)
+        {
+            MainFrame.Navigate(new PurchaseDetailPage());
         }
     }
 }
