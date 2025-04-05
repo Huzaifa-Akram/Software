@@ -17,6 +17,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+
 
 namespace Software
 {
@@ -26,19 +29,21 @@ namespace Software
     public partial class PurchaseInvoicePage : Page
     {
         private DatabaseHelper? _databaseHelper;
-        private List<InvoiceItem>? _invoiceItems;
+        private ObservableCollection<InvoiceItem>? _invoiceItems;
         private List<Item>? _allItems;
         private Dictionary<int, int>? _reservedQuantities;
         private InvoiceItem? _editingItem;
         private ToastNotification? _toastNotification;
 
 
+        // ...existing code...
         public class InvoiceItem
         {
             public int ItemId { get; set; }
             public required string ItemName { get; set; }
             public decimal PurchaseRate { get; set; }
             public int Quantity { get; set; }
+            public int BonusQuantity { get; set; } // Add this property
             public decimal Total { get; set; }
             public decimal DiscountPercentage { get; set; } // Keep this for backward compatibility
             public DateTime? ExpiryDate { get; set; } // Add this property
@@ -48,14 +53,17 @@ namespace Software
         {
             InitializeComponent();
             _databaseHelper = new DatabaseHelper();
-            _invoiceItems = new List<InvoiceItem>();
+            _invoiceItems = new ObservableCollection<InvoiceItem>();
             _allItems = new List<Item>();
             _reservedQuantities = new Dictionary<int, int>(); // Add this line
-            _toastNotification = new ToastNotification(Application.Current.MainWindow);
+            _toastNotification = new ToastNotification(Application.Current.MainWindow); // Add this line
 
             LoadInvoiceNumber();
             LoadItems();
             LoadSuppliers();
+
+            InvoiceItemsListView.ItemsSource = _invoiceItems;
+
         }
         private void LoadInvoiceNumber()
         {
@@ -145,27 +153,31 @@ namespace Software
                 
                 CalculateTotal();
                 ItemDetailsPopup.IsOpen = true;
+                
+                // The dropdowns will be updated in the ItemDetailsPopup_Opened event
             }
         }
 
+        // ...existing code...
         private void AddToInvoiceButton_Click(object sender, RoutedEventArgs e)
         {
+            // Update date picker from dropdowns one more time before validation
+            UpdateDatePickerFromDropdowns();
+
             if (NewItemExpiryDatePicker.SelectedDate == null)
             {
-                ErrorLabel.Content = "Please enter an expiry date.";
+                ErrorLabel.Content = "Please select a valid expiry date.";
                 ErrorLabel.Visibility = Visibility.Visible;
                 return;
             }
 
             if (decimal.TryParse(ItemRateTextBox.Text, out decimal rate) &&
                 int.TryParse(ItemQuantityTextBox.Text, out int quantity) &&
+                int.TryParse(ItemBonusQuantityTextBox.Text, out int bonusQuantity) && // Parse bonus quantity
                 decimal.TryParse(ItemTotalTextBox.Text, out decimal total))
             {
                 // Get the selected item ID from the tag
                 int selectedItemId = (int)SelectedItemNameTextBlock.Tag;
-
-                // For purchase invoices, we don't need to check if quantity is available
-                // since we're adding to inventory, not consuming
 
                 var invoiceItem = new InvoiceItem
                 {
@@ -173,6 +185,7 @@ namespace Software
                     ItemName = SelectedItemNameTextBlock.Text,
                     PurchaseRate = rate, // This represents purchase rate in this context
                     Quantity = quantity,
+                    BonusQuantity = bonusQuantity, // Set bonus quantity
                     Total = total,
                     ExpiryDate = NewItemExpiryDatePicker.SelectedDate
                 };
@@ -181,17 +194,20 @@ namespace Software
                 if (_editingItem != null)
                 {
                     _invoiceItems?.Remove(_editingItem);
-                    InvoiceItemsListView.Items.Remove(_editingItem);
                     _editingItem = null;
                 }
 
-                _invoiceItems?.Add(invoiceItem);
-                InvoiceItemsListView.Items.Add(invoiceItem);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _invoiceItems?.Add(invoiceItem);
+                });
+
                 UpdateTotals();
                 ItemDetailsPopup.IsOpen = false;
                 ErrorLabel.Visibility = Visibility.Collapsed;
             }
         }
+
 
 
         private void ItemsListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -263,10 +279,12 @@ namespace Software
                 }
             }
         }
+        // ...existing code...
         private void SaveInvoice()
         {
             if (_invoiceItems == null || !_invoiceItems.Any())
             {
+                Console.WriteLine("No invoice items to save.");
                 return;
             }
             if (_databaseHelper == null) throw new InvalidOperationException("DatabaseHelper is not initialized.");
@@ -303,11 +321,10 @@ namespace Software
                             command.ExecuteNonQuery();
                         }
 
-
                         // 2. Insert invoice items
                         string insertInvoiceItemQuery = @"
-                        INSERT INTO InvoiceItems (InvoiceNumber, ItemId, Rate, Quantity, DiscountPercentage, Total)
-                        VALUES (@InvoiceNumber, @ItemId, @Rate, @Quantity, @DiscountPercentage, @Total);";
+                        INSERT INTO InvoiceItems (InvoiceNumber, ItemId, Rate, Quantity, BonusQuantity, DiscountPercentage, Total)
+                        VALUES (@InvoiceNumber, @ItemId, @Rate, @Quantity, @BonusQuantity, @DiscountPercentage, @Total);";
 
                         // 3. Insert new batches for each item
                         string insertBatchQuery = @"
@@ -325,6 +342,7 @@ namespace Software
                                     command.Parameters.AddWithValue("@ItemId", item.ItemId);
                                     command.Parameters.AddWithValue("@Rate", item.PurchaseRate);
                                     command.Parameters.AddWithValue("@Quantity", item.Quantity);
+                                    command.Parameters.AddWithValue("@BonusQuantity", item.BonusQuantity); // Add bonus quantity
                                     command.Parameters.AddWithValue("@DiscountPercentage", item.DiscountPercentage);
                                     command.Parameters.AddWithValue("@Total", item.Total);
                                     command.ExecuteNonQuery();
@@ -335,7 +353,7 @@ namespace Software
                                 {
                                     command.Parameters.AddWithValue("@ItemId", item.ItemId);
                                     command.Parameters.AddWithValue("@PurchaseRate", item.PurchaseRate);
-                                    command.Parameters.AddWithValue("@Quantity", item.Quantity);
+                                    command.Parameters.AddWithValue("@Quantity", item.Quantity + item.BonusQuantity); // Include bonus quantity
                                     command.Parameters.AddWithValue("@ExpiryDate", item.ExpiryDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value);
 
                                     batchId = Convert.ToInt32(command.ExecuteScalar());
@@ -350,7 +368,7 @@ namespace Software
                                 using (var command = new SQLiteCommand(updateItemTotalQuery, connection, transaction))
                                 {
                                     command.Parameters.AddWithValue("@ItemId", item.ItemId);
-                                    command.Parameters.AddWithValue("@Quantity", item.Quantity);
+                                    command.Parameters.AddWithValue("@Quantity", item.Quantity + item.BonusQuantity); // Include bonus quantity
                                     command.Parameters.AddWithValue("@PurchaseRate", item.PurchaseRate);
                                     command.ExecuteNonQuery();
                                 }
@@ -358,24 +376,27 @@ namespace Software
                                 var dbItem = _allItems?.FirstOrDefault(i => i.Id == item.ItemId);
                                 if (dbItem != null)
                                 {
-                                    dbItem.AvailableQuantity += item.Quantity;
+                                    dbItem.AvailableQuantity += item.Quantity + item.BonusQuantity; // Include bonus quantity
                                     dbItem.PurchaseRate = item.PurchaseRate;
                                 }
                             }
                         }
 
-
                         transaction.Commit();
-                        _toastNotification?.Show("Purchase Invoice saved successfully!", ToastNotification.NotificationType.Success);
+                        Debug.WriteLine("Purchase Invoice saved successfully!");
+                        _toastNotification?.Show("Purchase Invoice saved successfully!", ToastNotification.NotificationType.Success); // Add this line
                     }
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        _toastNotification?.Show($"Error Saving Invoice {ex.Message}", ToastNotification.NotificationType.Error);
+                        Debug.WriteLine($"Error Saving Invoice: {ex.Message}");
+                        _toastNotification?.Show($"Error Saving Invoice {ex.Message}", ToastNotification.NotificationType.Error); // Add this line
                     }
                 }
             }
         }
+
+
         private void CalculateTotal()
         {
             if (decimal.TryParse(ItemRateTextBox.Text, out decimal rate) &&
@@ -402,6 +423,7 @@ namespace Software
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             SaveInvoice();
+            MessageBox.Show("Invoice saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             ResetForm();
         }
         private void SaveAndPrintButton_Click(object sender, RoutedEventArgs e)
@@ -485,7 +507,7 @@ namespace Software
                 doc.Blocks.Add(borderContainer);
 
                 // Add the invoice title and number
-                Paragraph header = new Paragraph(new Run($"INVOICE"));
+                Paragraph header = new Paragraph(new Run($"PURCHASE INVOICE"));
                 header.FontSize = 20;
                 header.FontWeight = FontWeights.Bold;
                 header.TextAlignment = TextAlignment.Center;
@@ -528,7 +550,7 @@ namespace Software
 
                 Paragraph invoiceNumberPara = new Paragraph();
                 invoiceNumberPara.Inlines.Add(new Bold(new Run("Invoice #: ")));
-                invoiceNumberPara.Inlines.Add(new Run($"{invoiceNumber}"));
+                invoiceNumberPara.Inlines.Add(new Run($"P{invoiceNumber}"));
                 invoiceNumberPara.Margin = new Thickness(0);
                 invoiceNumberPara.FontSize = 12;
 
@@ -562,6 +584,7 @@ namespace Software
                 table.Columns.Add(new TableColumn { Width = new GridLength(3, GridUnitType.Star) }); // Item name
                 table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) }); // Rate
                 table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) }); // Quantity
+                table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) }); // Bonus Quantity
                 table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) }); // Discount
                 table.Columns.Add(new TableColumn { Width = new GridLength(1.5, GridUnitType.Star) }); // Total
 
@@ -571,10 +594,10 @@ namespace Software
                 headerRow.Background = Brushes.LightGray;
 
                 // Create header cells with bold text
-                TableCell itemNameHeader = new TableCell(new Paragraph(new Bold(new Run("Item Description"))));
+                TableCell itemNameHeader = new TableCell(new Paragraph(new Bold(new Run("Item Name"))));
                 TableCell rateHeader = new TableCell(new Paragraph(new Bold(new Run("Unit Price"))));
                 TableCell qtyHeader = new TableCell(new Paragraph(new Bold(new Run("Qty"))));
-                TableCell discountHeader = new TableCell(new Paragraph(new Bold(new Run("Discount"))));
+                TableCell discountHeader = new TableCell(new Paragraph(new Bold(new Run("Bonus-Qty"))));
                 TableCell totalHeader = new TableCell(new Paragraph(new Bold(new Run("Amount"))));
 
                 // Center align header text
@@ -617,7 +640,7 @@ namespace Software
                         TableCell nameCell = new TableCell(new Paragraph(new Run(item.ItemName ?? "N/A")));
                         TableCell rateCell = new TableCell(new Paragraph(new Run(item.PurchaseRate.ToString("F2"))));
                         TableCell quantityCell = new TableCell(new Paragraph(new Run(item.Quantity.ToString())));
-                        TableCell discountCell = new TableCell(new Paragraph(new Run(item.DiscountPercentage.ToString("F2") + "%")));
+                        TableCell discountCell = new TableCell(new Paragraph(new Run(item.BonusQuantity.ToString())));
                         TableCell totalCell = new TableCell(new Paragraph(new Run(item.Total.ToString("F2"))));
 
                         // Align text
@@ -752,14 +775,25 @@ namespace Software
         private void ResetForm()
         {
             _invoiceItems?.Clear();
-            InvoiceItemsListView.Items.Clear();
             SupplierComboBox.SelectedIndex = -1;
             LoadInvoiceNumber();
             TotalDiscountTextBlock.Text = "0.00";
             TotalAmountTextBlock.Text = "0.00";
 
             // Clear any other state as needed
+            _editingItem = null;
+            SelectedItemNameTextBlock.Text = string.Empty;
+            SelectedItemNameTextBlock.Tag = null;
+            ItemRateTextBox.Text = string.Empty;
+            ItemQuantityTextBox.Text = string.Empty;
+            ItemBonusQuantityTextBox.Text = string.Empty; // Clear bonus quantity
+            ItemTotalTextBox.Text = string.Empty;
+            NewItemExpiryDatePicker.SelectedDate = null;
+            ErrorLabel.Visibility = Visibility.Collapsed;
+            _reservedQuantities?.Clear();
         }
+
+
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             // Clear all fields and reset the form
@@ -778,7 +812,6 @@ namespace Software
             if (sender is Button button && button.DataContext is InvoiceItem selectedItem)
             {
                 _invoiceItems?.Remove(selectedItem);
-                InvoiceItemsListView.Items.Remove(selectedItem);
                 UpdateTotals();
             }
         }
@@ -815,6 +848,24 @@ namespace Software
         private void ItemDetailsPopup_Opened(object sender, EventArgs e)
         {
             ItemRateTextBox.Focus();
+            
+            // Initialize date dropdowns if needed
+            if (ExpiryDayComboBox.Items.Count == 0)
+            {
+                InitializeDateDropdowns();
+            }
+            
+            // If editing an item with existing expiry date, set the dropdowns accordingly
+            if (_editingItem != null && _editingItem.ExpiryDate.HasValue)
+            {
+                SetDateDropdownsFromDateTime(_editingItem.ExpiryDate.Value);
+            }
+            else
+            {
+                // Set default value to one year from today
+                DateTime defaultExpiryDate = DateTime.Today.AddYears(1);
+                SetDateDropdownsFromDateTime(defaultExpiryDate);
+            }
         }
 
         private void ItemDetailsPopup_KeyDown(object sender, KeyEventArgs e)
@@ -843,7 +894,14 @@ namespace Software
             ItemDetailsPopup.IsOpen = false;
             ErrorLabel.Visibility = Visibility.Collapsed;
             _editingItem = null;
+            SelectedItemNameTextBlock.Text = string.Empty;
+            SelectedItemNameTextBlock.Tag = null;
+            ItemRateTextBox.Text = string.Empty;
+            ItemQuantityTextBox.Text = string.Empty;
+            ItemTotalTextBox.Text = string.Empty;
+            NewItemExpiryDatePicker.SelectedDate = null;
         }
+
 
         // Add New Item functionality for creating new inventory items
         private void AddNewItemButton_Click(object sender, RoutedEventArgs e)
@@ -945,6 +1003,107 @@ namespace Software
                     }
                 }
             }
+        }
+        
+        // Initialize the date dropdown values
+        private void InitializeDateDropdowns()
+        {
+            // Clear existing items
+            ExpiryDayComboBox.Items.Clear();
+            ExpiryMonthComboBox.Items.Clear();
+            ExpiryYearComboBox.Items.Clear();
+            
+            // Fill days (1-31)
+            for (int day = 1; day <= 31; day++)
+            {
+                ExpiryDayComboBox.Items.Add(day.ToString("00"));
+            }
+            
+            // Fill months (January-December)
+            string[] monthNames = System.Globalization.DateTimeFormatInfo.CurrentInfo.MonthNames;
+            for (int month = 0; month < 12; month++)
+            {
+                ExpiryMonthComboBox.Items.Add($"{month + 1:00} - {monthNames[month]}");
+            }
+            
+            // Fill years (current year + 10 years)
+            int currentYear = DateTime.Now.Year;
+            for (int year = currentYear; year <= currentYear + 10; year++)
+            {
+                ExpiryYearComboBox.Items.Add(year.ToString());
+            }
+        }
+
+        // Set dropdown values from a DateTime
+        private void SetDateDropdownsFromDateTime(DateTime date)
+        {
+            ExpiryDayComboBox.SelectedIndex = date.Day - 1;
+            ExpiryMonthComboBox.SelectedIndex = date.Month - 1;
+            
+            int yearIndex = ExpiryYearComboBox.Items.IndexOf(date.Year.ToString());
+            if (yearIndex >= 0)
+            {
+                ExpiryYearComboBox.SelectedIndex = yearIndex;
+            }
+            else
+            {
+                // If the year isn't in the dropdown (older date), select the first year
+                ExpiryYearComboBox.SelectedIndex = 0;
+            }
+        }
+
+        // Event handler for dropdown selection changes
+        private void ExpiryDate_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateDatePickerFromDropdowns();
+        }
+
+        // Update the hidden DatePicker from dropdown values
+        private void UpdateDatePickerFromDropdowns()
+        {
+            if (ExpiryDayComboBox.SelectedIndex >= 0 && 
+                ExpiryMonthComboBox.SelectedIndex >= 0 && 
+                ExpiryYearComboBox.SelectedIndex >= 0)
+            {
+                try
+                {
+                    int day = ExpiryDayComboBox.SelectedIndex + 1;
+                    int month = ExpiryMonthComboBox.SelectedIndex + 1;
+                    int year = int.Parse(ExpiryYearComboBox.SelectedItem?.ToString() ?? throw new InvalidOperationException("Year selection is null."));
+                    
+                    // Validate the date (handle cases like February 30)
+                    if (IsValidDate(year, month, day))
+                    {
+                        DateTime selectedDate = new DateTime(year, month, day);
+                        NewItemExpiryDatePicker.SelectedDate = selectedDate;
+                    }
+                    else
+                    {
+                        // If date is invalid, adjust the day to the last day of the month
+                        int lastDay = DateTime.DaysInMonth(year, month);
+                        ExpiryDayComboBox.SelectedIndex = lastDay - 1;
+                    }
+                }
+                catch
+                {
+                    // Handle any conversion errors
+                    NewItemExpiryDatePicker.SelectedDate = null;
+                }
+            }
+            else
+            {
+                NewItemExpiryDatePicker.SelectedDate = null;
+            }
+        }
+
+        // Helper to validate if a date is valid
+        private bool IsValidDate(int year, int month, int day)
+        {
+            if (month < 1 || month > 12)
+                return false;
+                
+            int lastDay = DateTime.DaysInMonth(year, month);
+            return day >= 1 && day <= lastDay;
         }
     }
 }

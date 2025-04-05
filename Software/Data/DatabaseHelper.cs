@@ -10,7 +10,7 @@ namespace Software.Data
 {
     public class DatabaseHelper
     {
-        private static readonly string dbPath = "customer_management.db"; // Database file
+        private static readonly string dbPath = "cust_management.db"; // Database file
         private static readonly string connectionString = $"Data Source={dbPath};Version=3;";
 
         public DatabaseHelper()
@@ -91,6 +91,7 @@ namespace Software.Data
                 ItemId INTEGER,
                 Rate REAL NOT NULL,
                 Quantity INTEGER NOT NULL,
+                BonusQuantity INTEGER DEFAULT 0, 
                 DiscountPercentage REAL DEFAULT 0,
                 Total REAL NOT NULL,
                 FOREIGN KEY (InvoiceNumber) REFERENCES Invoices(InvoiceNumber),

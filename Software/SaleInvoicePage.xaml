@@ -205,35 +205,29 @@
 
                 <!-- Action Buttons -->
                 <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Vertical" VerticalAlignment="Center" >
-                    <Border CornerRadius="20" Margin="0,0,0,8" Padding="6" Background="#15700e" Width="200">
                         <Button x:Name="SaveButton" Click="SaveButton_Click" 
                             Style="{StaticResource SaveButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="20,10">
                                 <Image Source="Resources/save_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
                                 <TextBlock Text="Save"/>
                             </StackPanel>
                         </Button>
-                    </Border>
 
-                    <Border CornerRadius="20" Margin="0,0,0,8" Background="#FF5252" Padding="6" Width="200">
                         <Button x:Name="CancelButton" Click="CancelButton_Click" 
                             Style="{StaticResource CancelButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="20,10">
                                 <Image Source="Resources/cancel_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
                                 <TextBlock Text="Cancel"/>
                             </StackPanel>
                         </Button>
-                    </Border>
 
-                    <Border CornerRadius="20" Background="#5E35B1" Padding="6" Width="200">
                         <Button x:Name="SaveAndPrintButton" Click="SaveAndPrintButton_Click" 
                             Style="{StaticResource SaveAndPrintButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="20,10">
                                 <Image Source="Resources/print_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
                                 <TextBlock Text="Save &amp; Print"/>
                             </StackPanel>
                         </Button>
-                    </Border>
                 </StackPanel>
             </Grid>
 

@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Windows.Input;
 
 namespace Software
 {
@@ -363,5 +364,13 @@ namespace Software
                 MessageBox.Show($"Failed to send license key: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void txtLicenseKey_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                btnLogin_Click(sender, e);
+            }
+        }
+
     }
 }

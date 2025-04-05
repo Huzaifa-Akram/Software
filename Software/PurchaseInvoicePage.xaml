@@ -7,7 +7,7 @@
       mc:Ignorable="d" 
       d:DesignHeight="650" d:DesignWidth="840"
               Title="Purchase Invoice"
-      Background="#F5F5F5">
+      Background="#F5F5F5">    
 
     <Page.Resources>
         <DropShadowEffect x:Key="DropShadowEffect" ShadowDepth="2" Direction="315" Opacity="0.2" BlurRadius="5"/>
@@ -120,14 +120,16 @@
                             <ColumnDefinition Width="130"/>
                             <ColumnDefinition Width="130"/>
                             <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
                             <ColumnDefinition Width="40"/>
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Grid.Column="0" Text="Item Name" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
                         <TextBlock Grid.Column="1" Text="Purchase Rate" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
                         <TextBlock Grid.Column="2" Text="Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
-                        <TextBlock Grid.Column="3" Text="Expiry Date" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
-                        <TextBlock Grid.Column="4" Text="Total" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="3" Text="Bonus Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="4" Text="Expiry Date" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="5" Text="Total" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
                     </Grid>
                 </Border>
 
@@ -151,15 +153,17 @@
                                     <ColumnDefinition Width="130"/>
                                     <ColumnDefinition Width="130"/>
                                     <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="130"/>
                                     <ColumnDefinition Width="40"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="{Binding ItemName}" Padding="12,8" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="1" Text="{Binding PurchaseRate, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="2" Text="{Binding Quantity}" Padding="12,8" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="3" Text="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}" Padding="12,8" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="4" Text="{Binding Total, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
-                                <Button Grid.Column="5" Width="30" Height="30" Background="Transparent" BorderThickness="0" Click="DeleteInvoiceItemButton_Click">
+                                <TextBlock Grid.Column="3" Text="{Binding BonusQuantity}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Text="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="5" Text="{Binding Total, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <Button Grid.Column="6" Width="30" Height="30" Background="Transparent" BorderThickness="0" Click="DeleteInvoiceItemButton_Click">
                                     <Image Source="Resources/bin.png" Width="20" Height="20"/>
                                 </Button>
                             </Grid>
@@ -212,36 +216,31 @@
 
                 <!-- Action Buttons -->
                 <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Vertical" VerticalAlignment="Center" >
-                    <Border CornerRadius="20" Margin="0,0,0,8" Padding="6" Background="#15700e" Width="200">
                         <Button x:Name="SaveButton" Click="SaveButton_Click" 
-                            Style="{StaticResource SaveButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
+            Style="{StaticResource SaveButtonStyle}" >
+                        <StackPanel Orientation="Horizontal" Margin="20,10">
                                 <Image Source="Resources/save_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
                                 <TextBlock Text="Save"/>
                             </StackPanel>
                         </Button>
-                    </Border>
 
-                    <Border CornerRadius="20" Margin="0,0,0,8" Background="#FF5252" Padding="6" Width="200">
                         <Button x:Name="CancelButton" Click="CancelButton_Click" 
-                            Style="{StaticResource CancelButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
+            Style="{StaticResource CancelButtonStyle}" >
+                            <StackPanel Orientation="Horizontal" Margin="20,10">
                                 <Image Source="Resources/cancel_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
                                 <TextBlock Text="Cancel"/>
                             </StackPanel>
                         </Button>
-                    </Border>
 
-                    <Border CornerRadius="20" Background="#5E35B1" Padding="6" Width="200">
                         <Button x:Name="SaveAndPrintButton" Click="SaveAndPrintButton_Click" 
-                            Style="{StaticResource SaveAndPrintButtonStyle}">
-                            <StackPanel Orientation="Horizontal">
+            Style="{StaticResource SaveAndPrintButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Margin="20,10">
                                 <Image Source="Resources/print_icon.png" Width="20" Height="20" Margin="0,0,8,0"/>
                                 <TextBlock Text="Save &amp; Print"/>
                             </StackPanel>
                         </Button>
-                    </Border>
                 </StackPanel>
+
             </Grid>
 
             <!-- Popup for Item Selection -->
@@ -298,7 +297,7 @@
 
             <!-- Popup for Item Details Entry -->
             <Popup x:Name="ItemDetailsPopup" StaysOpen="False" Placement="Center" 
-           Width="400" Height="460" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
+           Width="400" Height="535" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
                 <Border Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="20" Effect="{StaticResource DropShadowEffect}">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -326,10 +325,41 @@
                                  TextChanged="ItemDetails_TextChanged"/>
                             </Border>
 
+                            <TextBlock Text="Bonus Quantity" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <TextBox x:Name="ItemBonusQuantityTextBox" Padding="12,8" BorderThickness="0" Text="0" />
+                            </Border>
+
 
                             <TextBlock Text="Expiry Date" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Day Dropdown -->
+                                <Border Grid.Column="0" BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,5,0">
+                                    <ComboBox x:Name="ExpiryDayComboBox" Padding="12,8" BorderThickness="0" 
+SelectionChanged="ExpiryDate_SelectionChanged"/>
+                                </Border>
+
+                                <!-- Month Dropdown -->
+                                <Border Grid.Column="1" BorderThickness="1" BorderBrush="#E0E0E0" Margin="5,0,5,0">
+                                    <ComboBox x:Name="ExpiryMonthComboBox" Padding="12,8" BorderThickness="0" 
+SelectionChanged="ExpiryDate_SelectionChanged"/>
+                                </Border>
+
+                                <!-- Year Dropdown -->
+                                <Border Grid.Column="2" BorderThickness="1" BorderBrush="#E0E0E0" Margin="5,0,0,0">
+                                    <ComboBox x:Name="ExpiryYearComboBox" Padding="12,8" BorderThickness="0" 
+SelectionChanged="ExpiryDate_SelectionChanged"/>
+                                </Border>
+                            </Grid>
                             <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
-                                <DatePicker x:Name="NewItemExpiryDatePicker" Padding="12,8" BorderThickness="0"/>
+                                <DatePicker x:Name="NewItemExpiryDatePicker" Visibility="Collapsed"/>
+                                
                             </Border>
 
                             <TextBlock Text="Total" Margin="0,0,0,8" FontWeight="Medium"/>

@@ -23,7 +23,7 @@
                 <!-- Login Form -->
         
                 <TextBlock Text="License Key:" VerticalAlignment="Top" Margin="0,15,0,10" HorizontalAlignment="Left"/>
-                <TextBox x:Name="txtLicenseKey" VerticalAlignment="Center" Height="35" Padding="10"  />
+                <TextBox x:Name="txtLicenseKey" VerticalAlignment="Center" Height="35" Padding="10" KeyDown="txtLicenseKey_KeyDown" />
 
                 <Button x:Name="btnLogin" Content="Login" Height="40" Background="#1A237E" Foreground="White" 
                         Margin="0,30,0,0" Click="btnLogin_Click"/>

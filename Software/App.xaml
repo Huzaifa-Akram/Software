@@ -26,8 +26,7 @@
                             <Border Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="3"
-                                Effect="{StaticResource DropShadowEffect}">
+                                CornerRadius="3">
                                 <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                              Margin="{TemplateBinding Padding}"/>
@@ -37,10 +36,7 @@
                 </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#283593"/>
-                    </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter Property="Background" Value="#1A237E"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -50,10 +46,24 @@
                 <Setter Property="Background" Value="#00E676"/>
                 <Setter Property="Foreground" Value="White"/>
                 <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="8,5"/>
+                <Setter Property="Padding" Value="100,9"/>
+                <Setter Property="Width" Value="200" />
+                <Setter Property="Margin" Value="0,5" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="20">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#00C853"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -63,7 +73,7 @@
                 <Setter Property="Background" Value="#15700e"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#00C853"/>
+                        <Setter Property="Background" Value="#1B5E20"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -73,7 +83,7 @@
                 <Setter Property="Background" Value="#FF5252"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#E53935"/>
+                        <Setter Property="Background" Value="#FF1744"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -83,7 +93,7 @@
                 <Setter Property="Background" Value="#5E35B1"/>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#4527A0"/>
+                        <Setter Property="Background" Value="#7E57C2"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>

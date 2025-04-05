@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -23,7 +24,7 @@ namespace Software
 
         public ToastNotification(Window parentWindow)
         {
-            _parentWindow = parentWindow;
+            _parentWindow = parentWindow ?? throw new ArgumentNullException(nameof(parentWindow), "Parent window cannot be null.");
 
             // Create notification panel
             _notificationPanel = new Border
@@ -50,18 +51,22 @@ namespace Software
             };
 
             // Add notification panel to parent window
-            if (_parentWindow is Window window)
+            if (_parentWindow.Content is Grid grid)
+            {
+                grid.Children.Add(_notificationPanel);
+            }
+            else
             {
                 Grid parentGrid = new Grid();
 
-                if (window.Content is UIElement existingContent)
+                if (_parentWindow.Content is UIElement existingContent)
                 {
-                    window.Content = null;
+                    _parentWindow.Content = null;
                     parentGrid.Children.Add(existingContent);
                 }
 
                 parentGrid.Children.Add(_notificationPanel);
-                window.Content = parentGrid;
+                _parentWindow.Content = parentGrid;
 
                 Panel.SetZIndex(_notificationPanel, 9999); // Ensure it's on top
             }
@@ -146,6 +151,9 @@ namespace Software
             };
             stackPanel.Children.Add(messageText);
 
+            // Ensure the notification panel is visible
+            _notificationPanel.Visibility = Visibility.Visible;
+
             // Show notification
             ShowNotification();
         }
@@ -192,6 +200,9 @@ namespace Software
                 To = new Thickness(16, 16, -250, 16), // Move right (outside view)
                 Duration = TimeSpan.FromMilliseconds(300)
             };
+
+            // Hide the notification panel after the animation completes
+            fadeOut.Completed += (s, e) => _notificationPanel.Visibility = Visibility.Collapsed;
 
             _notificationPanel.BeginAnimation(UIElement.OpacityProperty, fadeOut);
             _notificationPanel.BeginAnimation(Border.MarginProperty, slideOut);

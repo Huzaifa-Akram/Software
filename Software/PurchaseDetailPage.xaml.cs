@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -87,25 +87,19 @@ namespace Software
                     if (showAll)
                     {
                         query = @"
-                        SELECT 
-                            i.InvoiceNumber,
-                            i.InvoiceDate,
-                            s.Name AS SupplierName,
-                            ir.TotalCost,
-                            icogs.TotalCostOfGoodsSold,
-                            (ir.TotalCost - icogs.TotalCostOfGoodsSold) AS Profit
-                        FROM 
-                            Invoices i
-                        LEFT JOIN 
-                            Suppliers s ON i.SupplierId = s.Id
-                        JOIN 
-                            InvoiceRevenue ir ON i.InvoiceNumber = ir.InvoiceNumber
-                        JOIN 
-                            InvoiceCostOfGoodsSold icogs ON i.InvoiceNumber = icogs.InvoiceNumber
-                        WHERE 
-                            i.InvoiceType = 'P'
-                        ORDER BY 
-                            i.InvoiceDate DESC";
+                    SELECT 
+                        i.InvoiceNumber,
+                        i.InvoiceDate,
+                        i.SupplierName,
+                        (SELECT SUM(ii.Total) FROM InvoiceItems ii WHERE ii.InvoiceNumber = i.InvoiceNumber) AS TotalCost,
+                        0 AS TotalCostOfGoodsSold,
+                        0 AS Profit
+                    FROM 
+                        Invoices i
+                    WHERE 
+                        i.InvoiceType = 'P'
+                    ORDER BY 
+                        i.InvoiceDate DESC";
                     }
                     else
                     {
@@ -115,26 +109,20 @@ namespace Software
                         }
 
                         query = @"
-                        SELECT 
-                            i.InvoiceNumber,
-                            i.InvoiceDate,
-                            s.Name AS SupplierName,
-                            ir.TotalCost,
-                            icogs.TotalCostOfGoodsSold,
-                            (ir.TotalCost - icogs.TotalCostOfGoodsSold) AS Profit
-                        FROM 
-                            Invoices i
-                        LEFT JOIN 
-                            Suppliers s ON i.SupplierId = s.Id
-                        JOIN 
-                            InvoiceRevenue ir ON i.InvoiceNumber = ir.InvoiceNumber
-                        JOIN 
-                            InvoiceCostOfGoodsSold icogs ON i.InvoiceNumber = icogs.InvoiceNumber
-                        WHERE 
-                            i.InvoiceType = 'P' 
-                            AND i.InvoiceDate BETWEEN @FromDate AND @ToDate
-                        ORDER BY 
-                            i.InvoiceDate DESC";
+                    SELECT 
+                        i.InvoiceNumber,
+                        i.InvoiceDate,
+                        i.SupplierName,
+                        (SELECT SUM(ii.Total) FROM InvoiceItems ii WHERE ii.InvoiceNumber = i.InvoiceNumber) AS TotalCost,
+                        0 AS TotalCostOfGoodsSold,
+                        0 AS Profit
+                    FROM 
+                        Invoices i
+                    WHERE 
+                        i.InvoiceType = 'P' 
+                        AND i.InvoiceDate BETWEEN @FromDate AND @ToDate
+                    ORDER BY 
+                        i.InvoiceDate DESC";
                     }
 
                     using (var command = new SQLiteCommand(query, connection))
@@ -153,10 +141,10 @@ namespace Software
                                 {
                                     InvoiceDate = DateTime.Parse(reader["InvoiceDate"]?.ToString() ?? throw new InvalidOperationException("InvoiceDate is null")),
                                     SupplierName = reader["SupplierName"]?.ToString() ?? "Unknown",
-                                    TotalCost = Convert.ToDecimal(reader["TotalCost"]),
-                                    TotalCostOfGoodsSold = Convert.ToDecimal(reader["TotalCostOfGoodsSold"]),
+                                    TotalCost = reader["TotalCost"] != DBNull.Value ? Convert.ToDecimal(reader["TotalCost"]) : 0m,
+                                    TotalCostOfGoodsSold = reader["TotalCostOfGoodsSold"] != DBNull.Value ? Convert.ToDecimal(reader["TotalCostOfGoodsSold"]) : 0m,
                                     InvoiceNumber = reader["InvoiceNumber"]?.ToString() ?? string.Empty,
-                                    Profit = Convert.ToDecimal(reader["Profit"])
+                                    Profit = reader["Profit"] != DBNull.Value ? Convert.ToDecimal(reader["Profit"]) : 0m
                                 };
 
                                 if (invoice.TotalCost > 0)
@@ -386,7 +374,7 @@ namespace Software
                 BlockUIContainer borderContainer = new BlockUIContainer(border);
                 doc.Blocks.Add(borderContainer);
 
-                Paragraph header = new Paragraph(new Run($"INVOICE"));
+                Paragraph header = new Paragraph(new Run("PURCHASE INVOICE"));
                 header.FontSize = 20;
                 header.FontWeight = FontWeights.Bold;
                 header.TextAlignment = TextAlignment.Center;
@@ -403,7 +391,7 @@ namespace Software
                 TableRow infoRow = new TableRow();
 
                 TableCell supplierCell = new TableCell();
-                Paragraph supplierTitle = new Paragraph(new Bold(new Run("BILL TO:")));
+                Paragraph supplierTitle = new Paragraph(new Bold(new Run("SUPPLIER:")));
                 supplierTitle.FontSize = 12;
                 supplierTitle.Margin = new Thickness(0, 0, 0, 5);
 
@@ -451,10 +439,11 @@ namespace Software
                 table.BorderBrush = Brushes.Black;
                 table.BorderThickness = new Thickness(1);
 
+                // Updated columns - removed discount, added expiry date
                 table.Columns.Add(new TableColumn { Width = new GridLength(3, GridUnitType.Star) });
                 table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
                 table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
-                table.Columns.Add(new TableColumn { Width = new GridLength(1, GridUnitType.Star) });
+                table.Columns.Add(new TableColumn { Width = new GridLength(1.5, GridUnitType.Star) });
                 table.Columns.Add(new TableColumn { Width = new GridLength(1.5, GridUnitType.Star) });
 
                 TableRowGroup headerGroup = new TableRowGroup();
@@ -464,25 +453,25 @@ namespace Software
                 TableCell itemNameHeader = new TableCell(new Paragraph(new Bold(new Run("Item Description"))));
                 TableCell rateHeader = new TableCell(new Paragraph(new Bold(new Run("Unit Price"))));
                 TableCell qtyHeader = new TableCell(new Paragraph(new Bold(new Run("Qty"))));
-                TableCell discountHeader = new TableCell(new Paragraph(new Bold(new Run("Discount"))));
+                TableCell expiryHeader = new TableCell(new Paragraph(new Bold(new Run("Expiry Date"))));
                 TableCell totalHeader = new TableCell(new Paragraph(new Bold(new Run("Amount"))));
 
                 itemNameHeader.TextAlignment = TextAlignment.Left;
                 rateHeader.TextAlignment = TextAlignment.Left;
                 qtyHeader.TextAlignment = TextAlignment.Left;
-                discountHeader.TextAlignment = TextAlignment.Left;
+                expiryHeader.TextAlignment = TextAlignment.Left;
                 totalHeader.TextAlignment = TextAlignment.Right;
 
                 itemNameHeader.Padding = new Thickness(5);
                 rateHeader.Padding = new Thickness(5);
                 qtyHeader.Padding = new Thickness(5);
-                discountHeader.Padding = new Thickness(5);
+                expiryHeader.Padding = new Thickness(5);
                 totalHeader.Padding = new Thickness(5);
 
                 headerRow.Cells.Add(itemNameHeader);
                 headerRow.Cells.Add(rateHeader);
                 headerRow.Cells.Add(qtyHeader);
-                headerRow.Cells.Add(discountHeader);
+                headerRow.Cells.Add(expiryHeader);
                 headerRow.Cells.Add(totalHeader);
 
                 headerGroup.Rows.Add(headerRow);
@@ -491,43 +480,42 @@ namespace Software
                 TableRowGroup bodyGroup = new TableRowGroup();
                 bool isAlternate = false;
 
-                if (_invoiceItems != null && bodyGroup != null) // Ensure objects are not null
+                if (_invoiceItems != null && bodyGroup != null)
                 {
-                    foreach (var item in _invoiceItems.Where(i => i != null)) // Skip null items
+                    foreach (var item in _invoiceItems.Where(i => i != null))
                     {
                         TableRow row = new TableRow();
                         if (isAlternate)
                             row.Background = Brushes.WhiteSmoke;
 
-                        // Ensure properties are not null before using them
                         string itemName = item.ItemName ?? "N/A";
                         string purchaseRate = item.PurchaseRate.ToString("F2");
                         string quantity = item.Quantity.ToString();
-                        string discountPercentage = item.DiscountPercentage.ToString("F2") + "%";
+                        string expiryDate = item.ExpiryDate.HasValue ? item.ExpiryDate.Value.ToString("yyyy-MM-dd") : "N/A";
                         string total = item.Total.ToString("F2");
 
                         TableCell nameCell = new TableCell(new Paragraph(new Run(itemName)));
                         TableCell rateCell = new TableCell(new Paragraph(new Run(purchaseRate)));
                         TableCell quantityCell = new TableCell(new Paragraph(new Run(quantity)));
-                        TableCell discountCell = new TableCell(new Paragraph(new Run(discountPercentage)));
+                        TableCell expiryCell = new TableCell(new Paragraph(new Run(expiryDate)));
                         TableCell totalCell = new TableCell(new Paragraph(new Run(total)));
 
                         nameCell.TextAlignment = TextAlignment.Left;
                         rateCell.TextAlignment = TextAlignment.Left;
                         quantityCell.TextAlignment = TextAlignment.Left;
-                        discountCell.TextAlignment = TextAlignment.Left;
+                        expiryCell.TextAlignment = TextAlignment.Left;
                         totalCell.TextAlignment = TextAlignment.Right;
 
                         nameCell.Padding = new Thickness(5);
                         rateCell.Padding = new Thickness(5);
                         quantityCell.Padding = new Thickness(5);
-                        discountCell.Padding = new Thickness(5);
+                        expiryCell.Padding = new Thickness(5);
                         totalCell.Padding = new Thickness(5);
 
                         row.Cells.Add(nameCell);
                         row.Cells.Add(rateCell);
                         row.Cells.Add(quantityCell);
-                        row.Cells.Add(discountCell);
+                        row.Cells.Add(expiryCell);
                         row.Cells.Add(totalCell);
 
                         bodyGroup.Rows.Add(row);
@@ -544,13 +532,11 @@ namespace Software
                 doc.Blocks.Add(table);
 
                 decimal subtotal = 0;
-                decimal totalDiscount = 0;
-                if (_invoiceItems != null) // Ensure the list is not null
+                if (_invoiceItems != null)
                 {
-                    foreach (var item in _invoiceItems.Where(i => i != null)) // Skip null items
+                    foreach (var item in _invoiceItems.Where(i => i != null))
                     {
-                        subtotal += item.PurchaseRate * item.Quantity;
-                        totalDiscount += item.PurchaseRate * item.Quantity * (item.DiscountPercentage / 100);
+                        subtotal += item.Total;
                     }
                 }
 
@@ -562,32 +548,7 @@ namespace Software
 
                 TableRowGroup totalsGroup = new TableRowGroup();
 
-                TableRow subtotalRow = new TableRow();
-                TableCell subtotalLabelCell = new TableCell(new Paragraph(new Run("Subtotal:")));
-                subtotalLabelCell.TextAlignment = TextAlignment.Right;
-                subtotalLabelCell.Padding = new Thickness(5);
-
-                TableCell subtotalValueCell = new TableCell(new Paragraph(new Run(subtotal.ToString("F2"))));
-                subtotalValueCell.TextAlignment = TextAlignment.Right;
-                subtotalValueCell.Padding = new Thickness(5);
-
-                subtotalRow.Cells.Add(subtotalLabelCell);
-                subtotalRow.Cells.Add(subtotalValueCell);
-                totalsGroup.Rows.Add(subtotalRow);
-
-                TableRow discountRow = new TableRow();
-                TableCell discountLabelCell = new TableCell(new Paragraph(new Run("Total Discount:")));
-                discountLabelCell.TextAlignment = TextAlignment.Right;
-                discountLabelCell.Padding = new Thickness(5);
-
-                TableCell discountValueCell = new TableCell(new Paragraph(new Run(totalDiscount.ToString("F2"))));
-                discountValueCell.TextAlignment = TextAlignment.Right;
-                discountValueCell.Padding = new Thickness(5);
-
-                discountRow.Cells.Add(discountLabelCell);
-                discountRow.Cells.Add(discountValueCell);
-                totalsGroup.Rows.Add(discountRow);
-
+                // Total row
                 TableRow totalRow = new TableRow();
                 totalRow.Background = Brushes.LightGray;
 
@@ -599,7 +560,7 @@ namespace Software
                 totalLabelCell.Padding = new Thickness(5);
 
                 TableCell totalValueCell = new TableCell();
-                Paragraph totalValuePara = new Paragraph(new Bold(new Run((subtotal - totalDiscount).ToString("F2"))));
+                Paragraph totalValuePara = new Paragraph(new Bold(new Run(subtotal.ToString("F2"))));
                 totalValuePara.FontSize = 14;
                 totalValueCell.Blocks.Add(totalValuePara);
                 totalValueCell.TextAlignment = TextAlignment.Right;
@@ -626,7 +587,7 @@ namespace Software
                 doc.Blocks.Add(terms);
 
                 // Print the document
-                printDialog.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, "Invoice");
+                printDialog.PrintDocument(((IDocumentPaginatorSource)doc).DocumentPaginator, "Purchase Invoice");
             }
         }
 

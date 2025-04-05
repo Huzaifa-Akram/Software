@@ -433,6 +433,7 @@ namespace Software
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             SaveInvoice();
+            MessageBox.Show("Invoice saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             ResetForm();
         }
 
