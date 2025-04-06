@@ -47,6 +47,7 @@ namespace Software.Data
                 Name TEXT NOT NULL,
                 CompanyName TEXT,
                 LatestPurchaseRate REAL NOT NULL,
+                LatestRetailPrice REAL NOT NULL,
                 TotalQuantity INTEGER NOT NULL
             );";
 
@@ -55,6 +56,7 @@ namespace Software.Data
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ItemId INTEGER,
                 PurchaseRate REAL NOT NULL,
+                RetailPrice REAL NOT NULL,
                 Quantity INTEGER NOT NULL,
                 ExpiryDate TEXT,
                 PurchaseDate TEXT DEFAULT (datetime('now')),
@@ -93,6 +95,7 @@ namespace Software.Data
                 Quantity INTEGER NOT NULL,
                 BonusQuantity INTEGER DEFAULT 0, 
                 DiscountPercentage REAL DEFAULT 0,
+                RetailPrice REAL,
                 Total REAL NOT NULL,
                 FOREIGN KEY (InvoiceNumber) REFERENCES Invoices(InvoiceNumber),
                 FOREIGN KEY (ItemId) REFERENCES Items(Id)

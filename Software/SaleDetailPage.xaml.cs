@@ -61,10 +61,11 @@ namespace Software
             public int ItemId { get; set; }
             public required string ItemName { get; set; }
             public decimal PurchaseRate { get; set; }
+            public decimal RetailPrice { get; set; } // Add this if it doesn't exist
+            public decimal SaleRate { get; set; }
             public int Quantity { get; set; }
-            public decimal Total { get; set; }
             public decimal DiscountPercentage { get; set; }
-            public DateTime? ExpiryDate { get; set; }
+            public decimal Total { get; set; }
         }
 
         private void LoadSalesData()
@@ -204,18 +205,23 @@ namespace Software
                 connection.Open();
 
                 string query = @"
-                SELECT 
-                    i.Name AS ItemName,
-                    ii.Rate AS PurchaseRate,
-                    ii.Quantity,
-                    ii.DiscountPercentage,
-                    ii.Total
-                FROM 
-                    InvoiceItems ii
-                JOIN 
-                    Items i ON ii.ItemId = i.Id
-                WHERE 
-                    ii.InvoiceNumber = @InvoiceNumber";
+        SELECT 
+            i.Name AS ItemName,
+            sid.PurchaseRate,
+            i.LatestRetailPrice AS RetailPrice,
+            ii.Rate AS SaleRate,
+            ii.Quantity,
+            ii.DiscountPercentage,
+            ii.Total,
+            sid.ItemId
+        FROM 
+            InvoiceItems ii
+        JOIN 
+            Items i ON ii.ItemId = i.Id
+        LEFT JOIN
+            SalesInvoiceBatchDeductions sid ON ii.InvoiceNumber = sid.InvoiceNumber AND ii.ItemId = sid.ItemId
+        WHERE 
+            ii.InvoiceNumber = @InvoiceNumber";
 
                 using (var command = new SQLiteCommand(query, connection))
                 {
@@ -225,12 +231,21 @@ namespace Software
                     {
                         while (reader.Read())
                         {
+                            decimal discountPercentage = Convert.ToDecimal(reader["DiscountPercentage"]);
+
+                            // Convert from percentage (0-100) to decimal (0-1) for use with {0:P2} format
+                            decimal discountAsDecimal = discountPercentage / 100.0m;
+
                             var item = new InvoiceItem
                             {
                                 ItemName = reader["ItemName"]?.ToString() ?? string.Empty,
-                                PurchaseRate = Convert.ToDecimal(reader["PurchaseRate"]),
+                                ItemId = reader.IsDBNull(reader.GetOrdinal("ItemId")) ? 0 : Convert.ToInt32(reader["ItemId"]),
+                                PurchaseRate = reader.IsDBNull(reader.GetOrdinal("PurchaseRate")) ? 0m : Convert.ToDecimal(reader["PurchaseRate"]),
+                                RetailPrice = reader.IsDBNull(reader.GetOrdinal("RetailPrice")) ? 0m : Convert.ToDecimal(reader["RetailPrice"]),
+                                SaleRate = Convert.ToDecimal(reader["SaleRate"]),
                                 Quantity = Convert.ToInt32(reader["Quantity"]),
-                                DiscountPercentage = Convert.ToDecimal(reader["DiscountPercentage"]),
+                                // Store as decimal (0-1) for the P2 format
+                                DiscountPercentage = discountAsDecimal,
                                 Total = Convert.ToDecimal(reader["Total"])
                             };
 
@@ -240,6 +255,7 @@ namespace Software
                 }
             }
         }
+
 
 
 
@@ -515,13 +531,14 @@ namespace Software
 
                         // Ensure properties are not null before using them
                         string itemName = item.ItemName ?? "N/A";
-                        string purchaseRate = item.PurchaseRate.ToString("F2");
+                        string unitPrice = item.SaleRate.ToString("F2");
                         string quantity = item.Quantity.ToString();
-                        string discountPercentage = item.DiscountPercentage.ToString("F2") + "%";
+                        // In PrintInvoice method - change this line
+                        string discountPercentage = item.DiscountPercentage.ToString("P2");
                         string total = item.Total.ToString("F2");
 
                         TableCell nameCell = new TableCell(new Paragraph(new Run(itemName)));
-                        TableCell rateCell = new TableCell(new Paragraph(new Run(purchaseRate)));
+                        TableCell rateCell = new TableCell(new Paragraph(new Run(unitPrice)));
                         TableCell quantityCell = new TableCell(new Paragraph(new Run(quantity)));
                         TableCell discountCell = new TableCell(new Paragraph(new Run(discountPercentage)));
                         TableCell totalCell = new TableCell(new Paragraph(new Run(total)));

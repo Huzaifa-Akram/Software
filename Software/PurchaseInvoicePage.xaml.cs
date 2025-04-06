@@ -42,6 +42,7 @@ namespace Software
             public int ItemId { get; set; }
             public required string ItemName { get; set; }
             public decimal PurchaseRate { get; set; }
+            public decimal RetailPrice { get; set; } // Add this property
             public int Quantity { get; set; }
             public int BonusQuantity { get; set; } // Add this property
             public decimal Total { get; set; }
@@ -144,6 +145,7 @@ namespace Software
                 SelectedItemNameTextBlock.Text = selectedItem.ItemName;
                 SelectedItemNameTextBlock.Tag = selectedItem.ItemId; // Store the item ID
                 ItemRateTextBox.Text = selectedItem.PurchaseRate.ToString("F2"); // For purchase invoice, this is purchase rate
+                RetailPriceTextBox.Text = selectedItem.RetailPrice.ToString("F2"); // Set retail price
                 ItemQuantityTextBox.Text = selectedItem.Quantity.ToString();
                 NewItemExpiryDatePicker.SelectedDate = selectedItem.ExpiryDate; // Set the date picker
 
@@ -172,6 +174,7 @@ namespace Software
             }
 
             if (decimal.TryParse(ItemRateTextBox.Text, out decimal rate) &&
+                decimal.TryParse(RetailPriceTextBox.Text, out decimal retailPrice) && // Parse retail price
                 int.TryParse(ItemQuantityTextBox.Text, out int quantity) &&
                 int.TryParse(ItemBonusQuantityTextBox.Text, out int bonusQuantity) && // Parse bonus quantity
                 decimal.TryParse(ItemTotalTextBox.Text, out decimal total))
@@ -184,6 +187,7 @@ namespace Software
                     ItemId = selectedItemId,
                     ItemName = SelectedItemNameTextBlock.Text,
                     PurchaseRate = rate, // This represents purchase rate in this context
+                    RetailPrice = retailPrice, // Set retail price
                     Quantity = quantity,
                     BonusQuantity = bonusQuantity, // Set bonus quantity
                     Total = total,
@@ -233,11 +237,17 @@ namespace Software
 
                     // Pre-fill the rate with the last purchase price
                     ItemRateTextBox.Text = lastPurchasePrice.ToString("F2");
+                    
+                    // Set a default retail price with 20% markup
+                    RetailPriceTextBox.Text = (lastPurchasePrice * 1.2m).ToString("F2");
                 }
                 else
                 {
                     // If no previous purchase price found, use the current purchase rate from item
                     ItemRateTextBox.Text = selectedItem.PurchaseRate.ToString("F2");
+                    
+                    // Set a default retail price with 20% markup
+                    RetailPriceTextBox.Text = (selectedItem.PurchaseRate * 1.2m).ToString("F2");
 
                     if (FindName("LastPurchasePriceTextBlock") is TextBlock lastPurchasePriceTextBlock)
                     {
@@ -323,13 +333,13 @@ namespace Software
 
                         // 2. Insert invoice items
                         string insertInvoiceItemQuery = @"
-                        INSERT INTO InvoiceItems (InvoiceNumber, ItemId, Rate, Quantity, BonusQuantity, DiscountPercentage, Total)
-                        VALUES (@InvoiceNumber, @ItemId, @Rate, @Quantity, @BonusQuantity, @DiscountPercentage, @Total);";
+                        INSERT INTO InvoiceItems (InvoiceNumber, ItemId, Rate, Quantity, BonusQuantity, DiscountPercentage, RetailPrice, Total)
+                        VALUES (@InvoiceNumber, @ItemId, @Rate, @Quantity, @BonusQuantity, @DiscountPercentage, @RetailPrice, @Total);";
 
                         // 3. Insert new batches for each item
                         string insertBatchQuery = @"
-                        INSERT INTO ItemBatches (ItemId, PurchaseRate, Quantity, ExpiryDate, PurchaseDate)
-                        VALUES (@ItemId, @PurchaseRate, @Quantity, @ExpiryDate, datetime('now'))
+                        INSERT INTO ItemBatches (ItemId, PurchaseRate, RetailPrice, Quantity, ExpiryDate, PurchaseDate)
+                        VALUES (@ItemId, @PurchaseRate, @RetailPrice, @Quantity, @ExpiryDate, datetime('now'))
                         RETURNING Id;";
 
                         if (_invoiceItems != null)
@@ -344,6 +354,7 @@ namespace Software
                                     command.Parameters.AddWithValue("@Quantity", item.Quantity);
                                     command.Parameters.AddWithValue("@BonusQuantity", item.BonusQuantity); // Add bonus quantity
                                     command.Parameters.AddWithValue("@DiscountPercentage", item.DiscountPercentage);
+                                    command.Parameters.AddWithValue("@RetailPrice", item.RetailPrice); // Add retail price
                                     command.Parameters.AddWithValue("@Total", item.Total);
                                     command.ExecuteNonQuery();
                                 }
@@ -353,6 +364,7 @@ namespace Software
                                 {
                                     command.Parameters.AddWithValue("@ItemId", item.ItemId);
                                     command.Parameters.AddWithValue("@PurchaseRate", item.PurchaseRate);
+                                    command.Parameters.AddWithValue("@RetailPrice", item.RetailPrice); // Add retail price
                                     command.Parameters.AddWithValue("@Quantity", item.Quantity + item.BonusQuantity); // Include bonus quantity
                                     command.Parameters.AddWithValue("@ExpiryDate", item.ExpiryDate?.ToString("yyyy-MM-dd") ?? (object)DBNull.Value);
 
@@ -362,7 +374,8 @@ namespace Software
                                 string updateItemTotalQuery = @"
                                     UPDATE Items
                                     SET TotalQuantity = TotalQuantity + @Quantity,
-                                        LatestPurchaseRate = @PurchaseRate
+                                        LatestPurchaseRate = @PurchaseRate,
+                                        LatestRetailPrice = @RetailPrice
                                     WHERE Id = @ItemId;";
 
                                 using (var command = new SQLiteCommand(updateItemTotalQuery, connection, transaction))
@@ -370,6 +383,7 @@ namespace Software
                                     command.Parameters.AddWithValue("@ItemId", item.ItemId);
                                     command.Parameters.AddWithValue("@Quantity", item.Quantity + item.BonusQuantity); // Include bonus quantity
                                     command.Parameters.AddWithValue("@PurchaseRate", item.PurchaseRate);
+                                    command.Parameters.AddWithValue("@RetailPrice", item.RetailPrice); 
                                     command.ExecuteNonQuery();
                                 }
 
@@ -378,6 +392,7 @@ namespace Software
                                 {
                                     dbItem.AvailableQuantity += item.Quantity + item.BonusQuantity; // Include bonus quantity
                                     dbItem.PurchaseRate = item.PurchaseRate;
+                                    dbItem.RetailPrice = item.RetailPrice; 
                                 }
                             }
                         }
@@ -897,6 +912,7 @@ namespace Software
             SelectedItemNameTextBlock.Text = string.Empty;
             SelectedItemNameTextBlock.Tag = null;
             ItemRateTextBox.Text = string.Empty;
+            RetailPriceTextBox.Text = string.Empty; // Reset retail price field
             ItemQuantityTextBox.Text = string.Empty;
             ItemTotalTextBox.Text = string.Empty;
             NewItemExpiryDatePicker.SelectedDate = null;
@@ -949,8 +965,8 @@ namespace Software
                     {
                         // Insert new item with ALL required fields
                         string insertItemQuery = @"
-                    INSERT INTO Items (Name, CompanyName, LatestPurchaseRate, TotalQuantity)
-                    VALUES (@Name, @CompanyName, @LatestPurchaseRate, @TotalQuantity)
+                    INSERT INTO Items (Name, CompanyName, LatestPurchaseRate, LatestRetailPrice, TotalQuantity)
+                    VALUES (@Name, @CompanyName, @LatestPurchaseRate, @LatestRetailPrice, @TotalQuantity)
                     RETURNING Id;";
 
                         int newItemId;
@@ -971,6 +987,7 @@ namespace Software
                             // Include required fields with default values
                             command.Parameters.AddWithValue("@LatestPurchaseRate", 0.0);
                             command.Parameters.AddWithValue("@TotalQuantity", 0);
+                            command.Parameters.AddWithValue("@LatestRetailPrice", 0.0); 
 
                             // Get the new item's ID
                             newItemId = Convert.ToInt32(command.ExecuteScalar());
@@ -984,6 +1001,7 @@ namespace Software
                             Id = newItemId,
                             Name = NewItemNameTextBox.Text.Trim(),
                             PurchaseRate = 0,  // Initialize with default value
+                            RetailPrice = 0,   // Initialize with default value
                             AvailableQuantity = 0  // Initialize with default value
                         };
 

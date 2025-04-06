@@ -218,7 +218,7 @@ namespace Software
             using (var connection = _databaseHelper.GetConnection())
             {
                 connection.Open();
-                string query = "SELECT Id, Name, LatestPurchaseRate, TotalQuantity FROM Items";
+                string query = "SELECT Id, Name, LatestPurchaseRate, LatestRetailPrice, TotalQuantity FROM Items";
                 using (var command = new SQLiteCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
@@ -230,7 +230,9 @@ namespace Software
                                 Id = reader.GetInt32(0),
                                 Name = reader.GetString(1),
                                 PurchaseRate = reader.GetDecimal(2),
-                                AvailableQuantity = reader.GetInt32(3)
+                                RetailPrice = reader.GetDecimal(3),
+                                TotalQuantity = reader.GetInt32(4),
+                                AvailableQuantity = reader.GetInt32(4),
                             });
                         }
                     }
@@ -324,6 +326,7 @@ namespace Software
                 SelectedItemNameTextBlock.Text = selectedItem.Name;
                 SelectedItemNameTextBlock.Tag = selectedItem.Id; // Store the item ID
                 PurchaseRate.Text = "Purchase Rate: " + selectedItem.PurchaseRate.ToString("F2");
+                RetailPrice.Text = "Retail Price: " + selectedItem.RetailPrice.ToString("F2");
 
                 // Calculate available quantity (database quantity minus already reserved)
                 int availableQuantity = GetAvailableQuantity(selectedItem.Id);
@@ -340,7 +343,7 @@ namespace Software
                         // If you've already added a TextBlock for this in your XAML:
                         if (FindName("LastSalePriceTextBlock") is TextBlock lastSalePriceTextBlock)
                         {
-                            lastSalePriceTextBlock.Text = "Last Sale Price: " + lastSalePrice.ToString("F2");
+                            lastSalePriceTextBlock.Text = "Last Time Sale Price: " + lastSalePrice.ToString("F2");
                             lastSalePriceTextBlock.Visibility = Visibility.Visible;
                         }
 
@@ -1134,6 +1137,8 @@ namespace Software
         public int Id { get; set; }
         public required string Name { get; set; }
         public decimal PurchaseRate { get; set; }
+        public int TotalQuantity { get; set; }
+        public decimal RetailPrice { get; set; }
         public int AvailableQuantity { get; set; }
     }
 

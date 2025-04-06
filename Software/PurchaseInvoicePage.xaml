@@ -116,20 +116,22 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="110"/>
                             <ColumnDefinition Width="40"/>
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Grid.Column="0" Text="Item Name" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
                         <TextBlock Grid.Column="1" Text="Purchase Rate" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
-                        <TextBlock Grid.Column="2" Text="Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
-                        <TextBlock Grid.Column="3" Text="Bonus Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
-                        <TextBlock Grid.Column="4" Text="Expiry Date" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
-                        <TextBlock Grid.Column="5" Text="Total" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="2" Text="Retail Price" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="3" Text="Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="4" Text="Bonus Quantity" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="5" Text="Expiry Date" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Grid.Column="6" Text="Total" Padding="12,8" FontWeight="SemiBold" FontSize="15"/>
                     </Grid>
                 </Border>
 
@@ -149,21 +151,23 @@
                             <Grid Height="40">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="130"/>
-                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
                                     <ColumnDefinition Width="40"/>
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Column="0" Text="{Binding ItemName}" Padding="12,8" VerticalAlignment="Center"/>
                                 <TextBlock Grid.Column="1" Text="{Binding PurchaseRate, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="2" Text="{Binding Quantity}" Padding="12,8" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="3" Text="{Binding BonusQuantity}" Padding="12,8" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="4" Text="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}" Padding="12,8" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="5" Text="{Binding Total, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
-                                <Button Grid.Column="6" Width="30" Height="30" Background="Transparent" BorderThickness="0" Click="DeleteInvoiceItemButton_Click">
+                                <TextBlock Grid.Column="2" Text="{Binding RetailPrice, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="{Binding Quantity}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Text="{Binding BonusQuantity}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="5" Text="{Binding ExpiryDate, StringFormat='{}{0:dd/MM/yyyy}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="6" Text="{Binding Total, StringFormat='{}{0:F2}'}" Padding="12,8" VerticalAlignment="Center"/>
+                                <Button Grid.Column="7" Width="30" Height="30" Background="Transparent" BorderThickness="0" Click="DeleteInvoiceItemButton_Click">
                                     <Image Source="Resources/bin.png" Width="20" Height="20"/>
                                 </Button>
                             </Grid>
@@ -297,7 +301,7 @@
 
             <!-- Popup for Item Details Entry -->
             <Popup x:Name="ItemDetailsPopup" StaysOpen="False" Placement="Center" 
-           Width="400" Height="535" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
+           Width="400" Height="575" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
                 <Border Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="20" Effect="{StaticResource DropShadowEffect}">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -317,6 +321,11 @@
                             <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
                                 <TextBox x:Name="ItemRateTextBox" Padding="12,8" BorderThickness="0"
                                  TextChanged="ItemDetails_TextChanged"/>
+                            </Border>
+
+                            <TextBlock Text="Retail Price" Margin="0,0,0,8" FontWeight="Medium"/>
+                            <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">
+                                <TextBox x:Name="RetailPriceTextBox" Padding="12,8" BorderThickness="0"/>
                             </Border>
 
                             <TextBlock Text="Quantity" Margin="0,0,0,8" FontWeight="Medium"/>

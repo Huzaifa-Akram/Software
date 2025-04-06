@@ -285,7 +285,7 @@
 
             <!-- Popup for Item Details Entry -->
             <Popup x:Name="ItemDetailsPopup" StaysOpen="False" Placement="Center" 
-           Width="400" Height="480" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
+           Width="400" Height="500" IsOpen="False" Opened="ItemDetailsPopup_Opened" KeyDown="ItemDetailsPopup_KeyDown">
                 <Border Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="20" Effect="{StaticResource DropShadowEffect}">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -299,8 +299,9 @@
 
                         <StackPanel Grid.Row="1">
                             <TextBlock x:Name="PurchaseRate" Text="" FontWeight="Medium" Foreground="Red"/>
+                            <TextBlock x:Name="RetailPrice" Text="" FontWeight="Medium" Foreground="Red"/>
                             <TextBlock x:Name="QuantityAvailable" Text="" FontWeight="Medium" Foreground="Red"/>
-                            <TextBlock x:Name="LastSalePriceTextBlock" Text="Last Sale Price: 0.00" Visibility="Collapsed" Margin="0,5,0,5" Foreground="Green"/>
+                            <TextBlock x:Name="LastSalePriceTextBlock" Text="Last Sale Price: 0.00" Visibility="Collapsed" Margin="0,0,0,5" Foreground="Green" FontWeight="Medium"/>
 
                             <TextBlock Text="Rate" Margin="0,0,0,8" FontWeight="Medium"/>
                             <Border BorderThickness="1" BorderBrush="#E0E0E0" Margin="0,0,0,15">

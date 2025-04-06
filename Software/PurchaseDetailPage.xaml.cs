@@ -52,12 +52,15 @@ namespace Software
             LoadPurchaseData();
         }
 
+        // Add RetailPrice and BonusQuantity properties to the InvoiceItem class
         public class InvoiceItem
         {
             public int ItemId { get; set; }
             public required string ItemName { get; set; }
             public decimal PurchaseRate { get; set; }
+            public decimal RetailPrice { get; set; } // Added property
             public int Quantity { get; set; }
+            public int BonusQuantity { get; set; } // Added property
             public decimal Total { get; set; }
             public decimal DiscountPercentage { get; set; }
             public DateTime? ExpiryDate { get; set; }
@@ -174,6 +177,7 @@ namespace Software
             }
         }
 
+        // Update the LoadInvoiceItems method to retrieve RetailPrice and BonusQuantity
         private void LoadInvoiceItems(string invoiceNumber)
         {
             _invoiceItems?.Clear();
@@ -191,7 +195,9 @@ namespace Software
                 SELECT 
                     i.Name AS ItemName,
                     ii.Rate AS PurchaseRate,
+                    ii.RetailPrice, 
                     ii.Quantity,
+                    ii.BonusQuantity,
                     ii.DiscountPercentage,
                     ii.Total
                 FROM 
@@ -213,7 +219,9 @@ namespace Software
                             {
                                 ItemName = reader["ItemName"]?.ToString() ?? string.Empty,
                                 PurchaseRate = Convert.ToDecimal(reader["PurchaseRate"]),
+                                RetailPrice = reader.IsDBNull(reader.GetOrdinal("RetailPrice")) ? 0m : Convert.ToDecimal(reader["RetailPrice"]),
                                 Quantity = Convert.ToInt32(reader["Quantity"]),
+                                BonusQuantity = reader.IsDBNull(reader.GetOrdinal("BonusQuantity")) ? 0 : Convert.ToInt32(reader["BonusQuantity"]),
                                 DiscountPercentage = Convert.ToDecimal(reader["DiscountPercentage"]),
                                 Total = Convert.ToDecimal(reader["Total"])
                             };

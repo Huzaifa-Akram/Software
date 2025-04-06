@@ -110,6 +110,45 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Foreground" Value="#1E3A8A"/>
         </Style>
+
+        <Style x:Key="PopupHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#1E3A8A"/>
+            <Setter Property="Margin" Value="0,0,0,20"/>
+        </Style>
+
+        <Style x:Key="PopupLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#4B5563"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,10,0"/>
+        </Style>
+
+        <Style x:Key="PopupValueStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Foreground" Value="#1F2937"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="PopupSectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#1E3A8A"/>
+            <Setter Property="Margin" Value="0,15,0,10"/>
+        </Style>
+
+        <Style x:Key="PopupDataGridStyle" TargetType="DataGrid" BasedOn="{StaticResource DataGridStyle}">
+            <Setter Property="MaxHeight" Value="300"/>
+            <Setter Property="Margin" Value="0,5,0,10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="RowBackground" Value="#FFFFFF"/>
+            <Setter Property="AlternatingRowBackground" Value="#F9FAFB"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+        </Style>
     </Page.Resources>
 
     <Border Margin="20" Background="White" CornerRadius="8" Padding="24" 
@@ -298,38 +337,126 @@
 
             <!-- Popup for Invoice Details -->
             <Popup x:Name="InvoicePopup" Placement="Center" StaysOpen="False" IsOpen="{Binding IsInvoicePopupOpen}">
-                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="20" Width="600">
-                    <StackPanel>
-                        <TextBlock Text="Invoice Details" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
-                        <TextBlock Text="Invoice Number:" FontWeight="Bold"/>
-                        <TextBlock x:Name="PopupInvoiceNumberTextBlock" Margin="0,0,0,10"/>
-                        <TextBlock Text="Invoice Date:" FontWeight="Bold"/>
-                        <TextBlock x:Name="PopupInvoiceDateTextBlock" Margin="0,0,0,10"/>
-                        <TextBlock Text="Supplier Name:" FontWeight="Bold"/>
-                        <TextBlock x:Name="PopupSupplierNameTextBlock" Margin="0,0,0,10"/>
-                        <TextBlock Text="Total Cost:" FontWeight="Bold"/>
-                        <TextBlock x:Name="PopupTotalCostTextBlock" Margin="0,0,0,10"/>
-
-                        <!-- Items DataGrid -->
-                        <TextBlock Text="Items:" FontWeight="Bold" Margin="20,0,0,10"/>
-                        <DataGrid x:Name="PopupItemsDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" 
-                      CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" 
-                      Style="{StaticResource DataGridStyle}" ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}">
+                <Border Background="White" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="12" Width="700">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="15" ShadowDepth="2" Direction="315" Opacity="0.2" Color="#000000"/>
+                    </Border.Effect>
+                    <Grid Margin="25">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header -->
+                        <TextBlock Grid.Row="0" Text="Invoice Details" Style="{StaticResource PopupHeaderStyle}"/>
+                        
+                        <!-- Details Grid -->
+                        <Grid Grid.Row="1" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Left Column -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Invoice Number:" Style="{StaticResource PopupLabelStyle}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="PopupInvoiceNumberTextBlock" Style="{StaticResource PopupValueStyle}" />
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Invoice Date:" Style="{StaticResource PopupLabelStyle}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="PopupInvoiceDateTextBlock" Style="{StaticResource PopupValueStyle}" />
+                            
+                            <!-- Right Column -->
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Supplier Name:" Style="{StaticResource PopupLabelStyle}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="3" x:Name="PopupSupplierNameTextBlock" Style="{StaticResource PopupValueStyle}"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="Total Cost:" Style="{StaticResource PopupLabelStyle}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="3" x:Name="PopupTotalCostTextBlock" Style="{StaticResource PopupValueStyle}"/>
+                        </Grid>
+                        
+                        <!-- Items Section Header -->
+                        <TextBlock Grid.Row="2" Text="Items" Style="{StaticResource PopupSectionHeaderStyle}"/>
+                        
+                        <!-- Enhanced Items DataGrid -->
+                        <DataGrid Grid.Row="3" x:Name="PopupItemsDataGrid" AutoGenerateColumns="False" HeadersVisibility="Column" 
+                                  CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" 
+                                  Style="{StaticResource PopupDataGridStyle}" ColumnHeaderStyle="{StaticResource DataGridColumnHeaderStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="*"/>
-                                <DataGridTextColumn Header="Purchase Rate" Binding="{Binding PurchaseRate, StringFormat={}{0:C2}}" Width="100"/>
-                                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" Width="100"/>
-                                <DataGridTextColumn Header="Discount" Binding="{Binding DiscountPercentage, StringFormat={}{0:P2}}" Width="100"/>
-                                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:C2}}" Width="100"/>
+                                <DataGridTextColumn Header="Item Name" Binding="{Binding ItemName}" Width="*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="10,0"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="TextWrapping" Value="NoWrap"/>
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Purchase Rate" Binding="{Binding PurchaseRate, StringFormat={}{0:C2}}" Width="95">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="10,0"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Retail Price" Binding="{Binding RetailPrice, StringFormat={}{0:C2}}" Width="95">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="10,0"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                                            <Setter Property="Foreground" Value="#047857"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" Width="70">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="10,0"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Bonus Qty" Binding="{Binding BonusQuantity}" Width="95">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="10,0"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                                            <Setter Property="Foreground" Value="#0369A1"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                
+                                <DataGridTextColumn Header="Total" Binding="{Binding Total, StringFormat={}{0:C2}}" Width="95">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Padding" Value="10,0"/>
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="HorizontalAlignment" Value="Left"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-
+                        
                         <!-- Buttons -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                             <Button Content="Print" Width="100" Margin="0,0,10,0" Style="{StaticResource ActionButtonStyle}" Click="PrintButton_Click"/>
                             <Button Content="Close" Width="100" Style="{StaticResource ActionButtonStyle}" Click="ClosePopupButton_Click"/>
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </Popup>
         </Grid>
